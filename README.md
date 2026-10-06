@@ -1,52 +1,48 @@
 # Meal Tracker
 
-An iPhone app for hitting your daily calorie and macro goals.
+A progressive web app (PWA) for hitting your daily calorie and macro goals. Add it to your iPhone's Home Screen and it works like a regular app.
 
 - **Log food in plain English.** Type what you ate ("2 scrambled eggs, toast with butter, black coffee") and Claude breaks it into items with calories, protein, carbs, and fat. You can adjust any number before adding it.
-- **Exercise-adjusted targets.** Reads *active calories* from Apple Health and adds a share of them (50% by default, adjustable) to that day's calorie target. The extra calories go to carbs and fat; protein stays fixed.
-- **Daily dashboard.** Calories remaining, progress bars for each macro, food grouped by meal, and arrows to look back at earlier days. Tap an entry to edit it, or swipe to delete.
+- **Exercise-adjusted targets.** Add the active calories you burned (from Apple Health via a Shortcut, or typed in) and the app adds a share of them (50% by default, adjustable) to that day's calorie target. Protein stays fixed; the extra goes to carbs and fat.
+- **Daily dashboard.** Calories remaining, progress bars for each macro, food grouped by meal, and arrows to look back at earlier days. Tap an entry to edit or delete it.
 
-## Requirements
+## Getting it on your phone
 
-- A Mac with **Xcode 15 or newer**
-- An iPhone on **iOS 17+** (Apple Health data isn't available in the simulator)
-- An **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com). Analyzing a meal typically costs a few cents or less.
+The app is deployed to GitHub Pages by GitHub Actions on every push to the default branch.
 
-## Build and run
+1. **One-time:** in the GitHub repo, go to **Settings → Pages** and set **Source** to **GitHub Actions**. (GitHub Pages on a private repository needs a paid GitHub plan; otherwise make the repo public.)
+2. Re-run the latest **Test & Deploy** workflow from the **Actions** tab (or push any change).
+3. Open `https://<your-github-username>.github.io/meal-tracker/` in **Safari** on your iPhone, tap **Share → Add to Home Screen**, and open it from the new icon.
+4. Tap the gear icon, set your goals, and paste in an **Anthropic API key** from [console.anthropic.com](https://console.anthropic.com). Analyzing a meal typically costs a few cents or less.
 
-The Xcode project is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen):
+## Apple Health
 
-```sh
-brew install xcodegen
-xcodegen
-open MealTracker.xcodeproj
-```
+Web apps can't read Apple Health directly, so a small Shortcut copies your calories burned:
 
-Then in Xcode:
+1. In the **Shortcuts** app, create a shortcut named **Meal Tracker Burned** with these actions:
+   - **Find Health Samples** where Type is *Active Energy* and Start Date is *Today*
+   - **Calculate Statistics**: *Sum* of Health Samples
+   - **Round Number** to *Ones Place*
+   - **Copy to Clipboard**
+2. In the app, tap **Update** on the "kcal burned" card → **Run shortcut**, switch back, and tap **Paste**.
 
-1. Select the **MealTracker** target → **Signing & Capabilities**, and pick your Team. A free Apple ID works; with a free account the app has to be reinstalled every 7 days.
-2. If Xcode says the bundle ID is taken, change `com.example.mealtracker` to something unique (for example `com.yourname.mealtracker`).
-3. Plug in your iPhone, select it as the run destination, and press **Run**.
-
-On first launch, allow access to Active Energy when iOS asks. Then open **Settings** (gear icon), set your goals, and paste in your API key.
+You can also put the shortcut on your Home Screen or Action button, or just type the number from the Fitness app.
 
 ## Choosing your goals
 
-Set **Calories** to what you'd eat on a rest day, meaning your maintenance or deficit target at a *sedentary* activity level. Apple Health's active calories get added on top, so a base target that already assumes exercise would count it twice.
+Set **Calories** to what you'd eat on a rest day (your target at a *sedentary* activity level). Calories burned are added on top, so a target that already assumes exercise would count it twice.
 
-## Project layout
+## Your data
 
+Everything (log, goals, API key) is stored on your device in the app's local storage. Your API key is sent only to `api.anthropic.com`. Use **Settings → Backup → Export** now and then. If you delete the Home Screen app, its data goes with it.
+
+## Development
+
+```sh
+npm install
+npm run dev      # local dev server
+npm test         # unit tests
+npm run build    # production build in dist/
 ```
-MealTracker/
-  Models/      Macros, FoodEntry (SwiftData), Goals + exercise adjustment math
-  Services/    HealthKitService, NutritionEstimator (Claude API), Keychain
-  Views/       TodayView, AddMealView, EntryEditView, SettingsView
-MealTrackerTests/  Unit tests for target math and response decoding
-```
 
-Run tests with **⌘U** in Xcode.
-
-## Notes
-
-- Your log is stored on the device with SwiftData. The API key is kept in the iOS Keychain and sent only to `api.anthropic.com`.
-- Macros are estimates. Check items from restaurants or anything with a nutrition label, and edit them if needed.
+Built with Preact, TypeScript, Vite, and vite-plugin-pwa.
